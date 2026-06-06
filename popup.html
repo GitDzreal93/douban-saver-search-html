@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>豆瓣网页保存器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 288px; font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background: #f8f4ef; color: #333; }
+    .header { background: #3d6735; padding: 13px 16px 11px; display: flex; align-items: center; gap: 10px; }
+    .logo { width: 28px; height: 28px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #3d6735; flex-shrink: 0; }
+    .header h1 { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: 0.5px; }
+    .header p  { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+    .body { padding: 12px 16px; }
+    .page-info { background: #fff; border: 1px solid #e0d9d0; border-radius: 6px; padding: 9px 12px; margin-bottom: 10px; }
+    .label { font-size: 10px; color: #aaa; margin-bottom: 2px; }
+    .title { font-size: 12px; color: #333; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .url   { font-size: 10px; color: #bbb; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .page-count-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #f0ebe3; }
+    .badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+    .badge-multi  { background: #e8f4e6; color: #3d6735; }
+    .badge-single { background: #f0ebe3; color: #999; }
+    .page-count-desc { font-size: 10px; color: #888; }
+
+    .folder-row { background: #fff; border: 1px solid #e0d9d0; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .folder-info { flex: 1; min-width: 0; }
+    .folder-path { font-size: 11px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .folder-path.unset { color: #bbb; font-style: italic; font-size: 10px; }
+    .btn-change { flex-shrink: 0; font-size: 10px; color: #3d6735; background: none; border: 1px solid #b8d4b4; border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+    .btn-change:hover { background: #e8f4e6; }
+
+    .options { margin-bottom: 11px; }
+    .option-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #ede8e0; }
+    .option-item:last-child { border-bottom: none; }
+    .option-label { font-size: 12px; color: #444; }
+    .toggle { position: relative; width: 36px; height: 20px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 20px; transition: 0.2s; }
+    .slider:before { content: ''; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    input:checked + .slider { background: #3d6735; }
+    input:checked + .slider:before { transform: translateX(16px); }
+
+    .btn-row { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .btn-save { width: 100%; padding: 10px; background: #3d6735; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-save:hover    { background: #2f5228; }
+    .btn-save:active   { background: #254220; }
+    .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-search { width: 100%; padding: 9px 10px; background: #f2eadf; color: #3d6735; border: 1px solid #d6c7b4; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+    .btn-search:hover { background: #ebdfcf; border-color: #c9b59b; }
+    .progress { margin-top: 8px; display: none; background: #e8f4e6; border-radius: 4px; overflow: hidden; height: 4px; }
+    .progress-bar { height: 100%; background: #3d6735; transition: width 0.4s ease; width: 0%; }
+    .shortcut-hint { text-align: center; font-size: 10px; color: #aaa; margin-top: 7px; }
+    .shortcut-hint a { color: #3d6735; text-decoration: none; }
+    .status { margin-top: 7px; font-size: 11px; text-align: center; color: #888; min-height: 15px; }
+    .status.success { color: #3d6735; }
+    .status.error   { color: #c0392b; }
+    .not-douban { padding: 24px 16px; text-align: center; color: #888; font-size: 12px; line-height: 2; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">豆</div>
+    <div><h1>豆瓣网页保存器</h1><p>保存时自动隐藏账号信息</p></div>
+  </div>
+
+  <div id="main-content">
+    <div class="body">
+      <div class="page-info">
+        <div class="label">当前页面</div>
+        <div class="title" id="page-title">检测中...</div>
+        <div class="url"   id="page-url">—</div>
+        <div class="page-count-row">
+          <span class="badge badge-single" id="page-badge">1 页</span>
+          <span class="page-count-desc"   id="page-desc">单页帖子</span>
+        </div>
+      </div>
+
+      <div class="folder-row">
+        <div class="folder-info">
+          <div class="label">保存位置</div>
+          <div class="folder-path unset" id="folder-path">首次保存时弹窗选择，之后自动保存到同处</div>
+        </div>
+        <button class="btn-change" id="btn-change-folder" style="display:none">更换文件夹</button>
+      </div>
+
+      <div class="options">
+        <div class="option-item">
+          <span class="option-label">🔲 马赛克遮盖账号区域</span>
+          <label class="toggle"><input type="checkbox" id="opt-mosaic" checked><span class="slider"></span></label>
+        </div>
+        <div class="option-item">
+          <span class="option-label">🔗 底部嵌入来源链接</span>
+          <label class="toggle"><input type="checkbox" id="opt-infobar" checked><span class="slider"></span></label>
+        </div>
+        <div class="option-item">
+          <span class="option-label">🖼️ 内嵌图片到 HTML（自包含）</span>
+          <label class="toggle"><input type="checkbox" id="opt-saveimgs"><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" id="btn-save">💾 保存网页</button>
+        <button class="btn-search" id="btn-open-search">搜索已保存帖子</button>
+      </div>
+      <div class="progress" id="progress"><div class="progress-bar" id="progress-bar"></div></div>
+      <p class="shortcut-hint">快捷键：<strong>Alt+S</strong> &nbsp;·&nbsp; <a href="#" id="link-shortcuts">自定义</a></p>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <div id="not-douban" class="not-douban" style="display:none">
+    🌱<br>此插件仅适用于<br><strong>豆瓣 (douban.com)</strong> 网页
+    <div style="margin-top:14px">
+      <button class="btn-search" id="btn-open-search-alt" style="max-width:180px">搜索已保存帖子</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

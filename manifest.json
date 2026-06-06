@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "豆瓣帖子保存器（可搜索HTML版）",
+  "version": "3.1",
+  "description": "保存豆瓣帖子为可搜索的本地 HTML，自动隐藏账号信息，支持回复内容检索与本地搜索页",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "pageCapture",
+    "storage",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "*://*.douban.com/*",
+    "*://*.doubanio.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "save-page": {
+      "suggested_key": {
+        "default": "Alt+S",
+        "mac": "Alt+S"
+      },
+      "description": "保存当前豆瓣帖子"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "doubanio_referer",
+        "enabled": true,
+        "path": "dnr_rules.json"
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        { "header": "Referer", "operation": "set", "value": "https://www.douban.com/" }
+      ]
+    },
+    "condition": {
+      "urlFilter": "||doubanio.com/*",
+      "resourceTypes": ["xmlhttprequest", "image", "media", "other", "main_frame", "sub_frame"]
+    }
+  }
+]

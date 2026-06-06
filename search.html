@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>豆瓣帖子本地搜索</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255, 252, 247, 0.88);
+      --line: rgba(91, 68, 46, 0.14);
+      --text: #2b241f;
+      --muted: #746657;
+      --soft: #9a8d80;
+      --accent: #31533d;
+      --accent-2: #b8823a;
+      --accent-3: #efe2cf;
+      --danger: #9b3d34;
+      --shadow: 0 18px 45px rgba(70, 50, 32, 0.12);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(184, 130, 58, 0.20), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(49, 83, 61, 0.16), transparent 28%),
+        linear-gradient(180deg, #f7f1e8 0%, var(--bg) 50%, #efe6d8 100%);
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 30px auto;
+      padding: 28px;
+      border-radius: 32px;
+      background: rgba(255, 249, 242, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .hero-card, .side-card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    }
+
+    .hero-card {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: -36px;
+      top: -36px;
+      width: 180px;
+      height: 180px;
+      border-radius: 32px;
+      background: linear-gradient(135deg, rgba(184, 130, 58, 0.18), rgba(49, 83, 61, 0.08));
+      transform: rotate(18deg);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(49, 83, 61, 0.08);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    h1 {
+      margin: 16px 0 8px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.04;
+      letter-spacing: -0.04em;
+      font-family: "Hiragino Mincho ProN", "Songti SC", "STSong", serif;
+      font-weight: 700;
+      max-width: 10em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-copy {
+      margin: 0;
+      max-width: 52em;
+      color: var(--muted);
+      line-height: 1.8;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-notice {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(239, 226, 207, 0.88), rgba(255, 252, 248, 0.88));
+      border: 1px solid rgba(184, 130, 58, 0.18);
+      color: #5f5143;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+    }
+
+    .side-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .side-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--soft);
+    }
+
+    .folder-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      word-break: break-word;
+    }
+
+    .folder-hint {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(91, 68, 46, 0.10);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 22px;
+      font-family: "Hiragino Mincho ProN", "Songti SC", serif;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid var(--line);
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 17px 0;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+
+    .search-wrap input::placeholder { color: #a39484; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary-btn, .ghost-btn {
+      min-width: 144px;
+      padding: 0 18px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #345841, #253f31);
+      color: #fffdf9;
+      box-shadow: 0 12px 24px rgba(49, 83, 61, 0.20);
+    }
+
+    .ghost-btn {
+      color: var(--accent);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(49, 83, 61, 0.12);
+    }
+
+    .primary-btn:hover:not(:disabled),
+    .ghost-btn:hover:not(:disabled),
+    .result-open:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .feedback-row {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .status-pill {
+      padding: 13px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.6;
+      min-height: 52px;
+    }
+
+    .status-pill.error {
+      border-color: rgba(155, 61, 52, 0.18);
+      color: var(--danger);
+      background: rgba(255, 245, 243, 0.86);
+    }
+
+    .status-pill.success {
+      border-color: rgba(49, 83, 61, 0.18);
+      color: var(--accent);
+      background: rgba(243, 249, 244, 0.9);
+    }
+
+    .meta-note {
+      color: var(--soft);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .results-panel {
+      margin-top: 18px;
+      padding: 24px;
+    }
+
+    .results-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .results-head h2 {
+      margin: 0;
+      font-size: 22px;
+      font-family: "Hiragino Mincho ProN", "Songti SC", serif;
+      letter-spacing: -0.03em;
+    }
+
+    .results-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .results-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .result-card {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(91, 68, 46, 0.10);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .result-kicker {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .result-title {
+      margin: 6px 0 8px;
+      font-size: 18px;
+      line-height: 1.4;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .result-snippet {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .result-meta {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--soft);
+      font-size: 12px;
+    }
+
+    .result-open {
+      align-self: center;
+      min-width: 118px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: var(--accent-3);
+      color: var(--accent);
+      font-weight: 700;
+      border: 1px solid rgba(184, 130, 58, 0.18);
+    }
+
+    .empty-state {
+      padding: 34px 22px;
+      border-radius: 22px;
+      border: 1px dashed rgba(91, 68, 46, 0.18);
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.8;
+      background: rgba(255, 255, 255, 0.54);
+    }
+
+    mark {
+      background: rgba(184, 130, 58, 0.22);
+      color: inherit;
+      padding: 0 2px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .shell { width: min(100vw - 18px, 100%); margin: 10px auto; padding: 14px; border-radius: 24px; }
+      .hero { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr; }
+      .feedback-row { grid-template-columns: 1fr; }
+      .meta-note { text-align: left; }
+      .result-card { grid-template-columns: 1fr; }
+      .result-open { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <article class="hero-card">
+        <div class="eyebrow">本地搜索 · 离线可用</div>
+        <h1>搜索你已经保存下来的豆瓣帖子</h1>
+        <p class="hero-copy">
+          这个页面只在你的电脑里工作，不上传内容。先选择保存帖子 HTML 的文件夹，然后就可以按关键词搜索标题、正文和文件名。
+        </p>
+        <div class="hero-notice">
+          如果你刚保存了新帖子，请点击“刷新索引”，否则最新内容可能暂时搜索不到。这条提醒会一直保留，方便小白用户直接照着操作。
+        </div>
+      </article>
+
+      <aside class="side-card">
+        <div>
+          <div class="side-label">当前文件夹</div>
+          <div class="folder-name" id="folder-name">还没有选择文件夹</div>
+        </div>
+        <div class="folder-hint" id="folder-hint">第一次使用时，请先点击右侧按钮选择保存豆瓣 HTML 的文件夹。</div>
+        <div class="stats">
+          <div class="stat">
+            <strong id="stat-files">0</strong>
+            <span>已索引文件</span>
+          </div>
+          <div class="stat">
+            <strong id="stat-results">0</strong>
+            <span>当前结果</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="toolbar">
+      <label class="search-wrap" for="search-input">
+        <span>🔎</span>
+        <input id="search-input" type="search" placeholder="输入关键词，搜索标题、正文、文件名" disabled>
+      </label>
+      <button class="primary-btn" id="choose-folder">选择文件夹</button>
+      <button class="ghost-btn" id="refresh-index" disabled>刷新索引</button>
+    </section>
+
+    <section class="feedback-row">
+      <div class="status-pill" id="status-text">请先选择保存豆瓣帖子的文件夹。</div>
+      <div class="meta-note" id="last-updated">尚未建立索引</div>
+    </section>
+
+    <section class="panel results-panel">
+      <div class="results-head">
+        <div>
+          <h2>搜索结果</h2>
+          <p id="results-summary">先建立索引，然后就可以直接搜索。</p>
+        </div>
+      </div>
+      <div class="results-list" id="results-list">
+        <div class="empty-state">还没有可显示的结果。选择文件夹并建立索引后，结果会出现在这里。</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="search.js"></script>
+</body>
+</html>
