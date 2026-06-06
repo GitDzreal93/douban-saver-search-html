@@ -2,12 +2,12 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>豆瓣网页保存器</title>
+  <title>豆瓣帖子保存器（可搜索HTML版）</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 288px; font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background: #f8f4ef; color: #333; }
     .header { background: #3d6735; padding: 13px 16px 11px; display: flex; align-items: center; gap: 10px; }
-    .logo { width: 28px; height: 28px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #3d6735; flex-shrink: 0; }
+    .logo { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; display: block; object-fit: cover; background: rgba(255,255,255,0.16); }
     .header h1 { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: 0.5px; }
     .header p  { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 1px; }
     .body { padding: 12px 16px; }
@@ -58,8 +58,8 @@
 </head>
 <body>
   <div class="header">
-    <div class="logo">豆</div>
-    <div><h1>豆瓣网页保存器</h1><p>保存时自动隐藏账号信息</p></div>
+    <img class="logo" src="icons/icon48.png" alt="豆瓣帖子保存器图标">
+    <div><h1>豆瓣帖子保存器</h1><p>保存时自动隐藏账号信息</p></div>
   </div>
 
   <div id="main-content">
